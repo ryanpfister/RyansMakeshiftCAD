@@ -3,6 +3,17 @@ const mysql = require('mysql');
 const express = require('express');
 const app = express();
 const axios = require('axios');
+const Push = require('pushover-notifications');
+
+const RateLimit = require('axios-rate-limit');
+const rateLimitedAxios = RateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 180000 });
+
+
+
+const pushover = new Push({
+    user: 'uwaoo89yuqjsnri5wvcrqegg3muqg4', // Replace with your Pushover user key
+    token: 'auiyijcf3fharcg2zofjga588hecs5' // Replace with your Pushover API token
+});
 
 
 // Express : Define / Route
@@ -63,8 +74,12 @@ const delayInMillis = delayInMinutes * 60 * 1000; // Convert minutes to millisec
 setInterval(retrieveCallData, delayInMillis);
 
 function storeNewCalls(callData) {
+    console.log('Checking for New Calls');
+    const dispcallidList = [];
+
     callData.forEach(call => {
         const dispcallid = call.dispcallid;
+
         // Check if the call exists in the database
         const query = connection.query('SELECT * FROM calls WHERE dispcallid = ?', dispcallid, (error, results) => {
             if (error) {
@@ -73,17 +88,57 @@ function storeNewCalls(callData) {
             }
 
             if (results.length === 0) {
-                console.log(`Adding new call`)
+                console.log('Adding new call');
                 // Call does not exist in the database, insert it
                 insertCallData(call);
-            }
-            else {
-                console.log(`Call Already Found`)
+                setTimeout(() => {
+                    retrieveUpdatedCallData(call);
+                }, 5 * 60 * 1000); // Delay in milliseconds (5 minutes)
+            } else {
+                console.log('Call already found');        
             }
         });
     });
+
+    // Call the URL to retrieve dispatch narratives
+    setTimeout(() => {
+        retrieveDispatchNarrative(dispcallidList);
+      }, 3 * 60 * 1000);
+      
 }
-// Insert call data function
+
+function retrieveUpdatedCallData(call) {
+    const dispcallid = call.dispcallid;
+
+    // Make a POST request to retrieve the updated call data
+    const disppropUrl = 'http://104.167.248.66:8866/dispprop.json.php';
+    const disppropData = new URLSearchParams({
+        dispcallid: dispcallid,
+        nfirsmainid: call.nfirsmainid
+    });
+
+    rateLimitedAxios.post(disppropUrl, disppropData)
+        .then(response => {
+            const updatedCallData = response.data.dispprop.data.dispcall;
+            const updatedNarrative = updatedCallData.NARR;
+            const updatedCallPhone = updatedCallData.CALLPHONE;
+            const updatedCallAddr = updatedCallData.CALLADDR;
+            const updatedCallName = updatedCallData.CALLNAME;
+
+            // Update the stored call entry in the database with the updated data
+            const updateQuery = connection.query('UPDATE calls SET NARR = ?, CALLPHONE = ?, CALLADDR = ?, CALLNAME = ? WHERE dispcallid = ?', [updatedNarrative, updatedCallPhone, updatedCallAddr, updatedCallName, dispcallid], (updateError, updateResults) => {
+                if (updateError) {
+                    console.error('Error updating call data:', updateError);
+                    return;
+                }
+                console.log('Call data updated successfully');
+            });
+        })
+        .catch(error => {
+            console.error('Error retrieving updated call data:', error);
+        });
+}
+
 function insertCallData(callData) {
     // Convert datetime value to the correct format
     const datetimeAlarm = new Date(callData.datetimealarm).toISOString().slice(0, 19).replace('T', ' ');
@@ -94,6 +149,10 @@ function insertCallData(callData) {
             return;
         }
         console.log('Call data inserted successfully!');
+
+        setTimeout(() => {
+            retrieveDispatchNarrative(callData);
+        }, 180000);
     });
 }
 
@@ -132,15 +191,18 @@ function fixMissingCallData(callData) {
     }
 }
 
-function retrieveDispatchNarrative() {
-    // Fetch stored calls from the database
-    const query = connection.query('SELECT dispcallid, nfirsmainid FROM calls', (error, results) => {
+function retrieveDispatchNarrative(dispcallidList) {
+    
+    const processedIds = new Set();
+
+    const query = connection.query('SELECT dispcallid, nfirsmainid, NARR, CALLPHONE, CALLADDR, CALLNAME FROM calls', (error, results) => {
         if (error) {
             console.error('Error retrieving stored calls:', error);
             return;
         }
 
-        // Iterate over the stored calls and retrieve the dispatch narrative for each call
+        const batchRequest = [];
+
         results.forEach(call => {
             const dispcallid = call.dispcallid;
             const nfirsmainid = call.nfirsmainid;
@@ -148,26 +210,31 @@ function retrieveDispatchNarrative() {
             const callPhone = call.CALLPHONE;
             const callAddr = call.CALLADDR;
             const callName = call.CALLNAME;
-
-            // Check if any necessary information is missing from the call
-            if (!narrative || !callPhone || !callAddr || !callName) {
-                // If missing information, fix it by calling fixMissingCallData
-                fixMissingCallData(call);
+            if (processedIds.has(dispcallid)) {
+                return;
             }
-            // Make a POST request to retrieve the dispatch narrative
-            const disppropUrl = 'http://104.167.248.66:8866/dispprop.json.php';
-            const disppropData = new URLSearchParams({
-                dispcallid: dispcallid,
-                nfirsmainid: nfirsmainid
-            });
+            processedIds.add(dispcallid);
 
-            axios.post(disppropUrl, disppropData)
-                .then(response => {
+           
+                // Add the dispcallid and nfirsmainid to the batch request array
+                batchRequest.push({ dispcallid, nfirsmainid });
+            
+        });
+
+        // Make a single POST request to retrieve dispatch narratives for multiple calls
+        const disppropUrl = 'http://104.167.248.66:8866/dispprop.json.php';
+        const disppropData = batchRequest.map(call => new URLSearchParams(call));
+
+        axios.all(disppropData.map(data => axios.post(disppropUrl, data)))
+            .then(axios.spread((...responses) => {
+                responses.forEach((response, index) => {
                     const dispatchData = response.data.dispprop.data.dispcall;
                     const narrative = dispatchData.NARR;
                     const callPhone = dispatchData.CALLPHONE;
                     const callAddr = dispatchData.CALLADDR;
                     const callName = dispatchData.CALLNAME;
+
+                    const dispcallid = batchRequest[index].dispcallid;
 
                     // Update the stored call entry in the database with the dispatch narrative and additional fields
                     const updateQuery = connection.query('UPDATE calls SET NARR = ?, CALLPHONE = ?, CALLADDR = ?, CALLNAME = ? WHERE dispcallid = ?', [narrative, callPhone, callAddr, callName, dispcallid], (updateError, updateResults) => {
@@ -178,11 +245,10 @@ function retrieveDispatchNarrative() {
 
                         console.log('Stored call updated successfully.');
                     });
-
-                })
-                .catch(error => {
-                    console.error('Error retrieving dispatch narrative:', error);
                 });
-        });
+            }))
+            .catch(error => {
+                console.error('Error retrieving dispatch narratives:', error);
+            });
     });
 }
