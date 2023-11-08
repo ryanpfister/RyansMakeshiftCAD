@@ -1,3 +1,5 @@
+let locations = [];
+
 window.addEventListener('DOMContentLoaded', () => {
     const callList = document.getElementById('call-list');
 
@@ -14,7 +16,10 @@ window.addEventListener('DOMContentLoaded', () => {
             data.forEach(call => {
                 // Create a new div element for each call
                 let item = document.createElement('DIV');
-
+                const latitude = parseFloat(call.latitude);
+                const longitude = parseFloat(call.longitude);
+                const location = { lat: latitude, lng: longitude };
+                locations.push(location);
                 // Set the div text content to the call data
                 item.textContent = `Call #${call.dispcallid}: ${call.dispcalltypedescr} - ${call.dispsubtypedescr}`;
 
@@ -43,20 +48,6 @@ window.addEventListener('DOMContentLoaded', () => {
                       if (item.contains(mapDiv)) {
                         item.removeChild(mapDiv);
                       }
-                    } else { // Else, add it
-                      console.log(call)
-                      const latitude = parseFloat(call.latitude);
-                      const longitude = parseFloat(call.longitude);
-                      console.log(latitude)
-                      console.log(longitude)
-                      const location = { lat: latitude, lng: longitude };
-                      let map = new google.maps.Map(mapDiv, {
-                        center: location,
-                        zoom: 8
-                      });
-                  
-                      // append the map to the item
-                      item.appendChild(mapDiv);
                     }
                   };
 
@@ -71,3 +62,33 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Call the callback function when the Google Maps API script is loaded
+
+
+
+function initMap() {
+    const map = new google.maps.Map(document.getElementById("map"), {
+      center: locations[0],
+      zoom: 8,
+    });
+  
+    // Create an array to store the markers
+    const markers = [];
+  
+    // Loop through all the locations and create a marker for each one
+    locations.forEach((location) => {
+      const marker = new google.maps.Marker({
+        position: location,
+        map: map,
+      });
+  
+      // Add the marker to the array
+      markers.push(marker);
+    });
+  
+    // Create a marker clusterer to group nearby markers
+    new MarkerClusterer(map, markers, {
+      imagePath:
+        "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
+    });
+  }
+  
