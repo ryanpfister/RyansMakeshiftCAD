@@ -27,39 +27,38 @@ window.addEventListener('DOMContentLoaded', () => {
                     let callData = document.createElement('DIV');
                     console.log('call:', call); // Add this line for debugging
                     callData.textContent = `Time: ${call.time} Address: ${call.address}, ${call.city}, ${call.state}`;
-
+                  
                     // Create a div for the map
                     let mapDiv = document.createElement('DIV');
                     mapDiv.setAttribute('id', 'map');
-
+                  
                     // Set the item to display "flex"
                     item.style.display = 'flex';
-
+                  
                     // If item contains callData, remove it
                     if (item.contains(callData)) {
-                        item.removeChild(callData);
-                        toggleLink.textContent = 'Show More';
-                        // If item contains mapDiv, remove it
-                        if (item.contains(mapDiv)) {
-                            item.removeChild(mapDiv);
-                        }
+                      item.removeChild(callData);
+                      toggleLink.textContent = 'Show More';
+                      // If item contains mapDiv, remove it
+                      if (item.contains(mapDiv)) {
+                        item.removeChild(mapDiv);
+                      }
                     } else { // Else, add it
-                        console.log(call)
-                        const latitude = parseFloat(call.latitude);
-                        const longitude = parseFloat(call.longitude);
-                        console.log(latitude)
-                        console.log(longitude)
-                        const location = { lat: latitude, lng: longitude };
-                        let map = new google.maps.Map(mapDiv, {
-                            center: location,
-                            zoom: 8
-                        });
-
-
-                        // append the map to the item
-                        item.appendChild(mapDiv);
+                      console.log(call)
+                      const latitude = parseFloat(call.latitude);
+                      const longitude = parseFloat(call.longitude);
+                      console.log(latitude)
+                      console.log(longitude)
+                      const location = { lat: latitude, lng: longitude };
+                      let map = new google.maps.Map(mapDiv, {
+                        center: location,
+                        zoom: 8
+                      });
+                  
+                      // append the map to the item
+                      item.appendChild(mapDiv);
                     }
-                };
+                  };
 
                 // Add the new call to the call list
                 item.appendChild(toggleLink);
