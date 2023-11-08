@@ -259,3 +259,14 @@ app.all('/', function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "X-Requested-With");
     next();
    });
+   app.use((req, res, next) => {
+    let user = auth(req)
+  
+    if (user === undefined || user['name'] !== 'mifd' || user['pass'] !== 'fireems') {
+      res.statusCode = 401
+      res.setHeader('WWW-Authenticate', 'Basic realm="Node"')
+      res.end('Unauthorized')
+    } else {
+      next()
+    }
+  })
