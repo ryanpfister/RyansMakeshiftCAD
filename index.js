@@ -7,7 +7,7 @@ const Push = require('pushover-notifications');
 
 
 // Express : Start Server
-const port = 3000; // Use any port number you prefer
+const port = 80; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
@@ -15,7 +15,7 @@ app.listen(port, () => {
 
 
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '35.203.85.92',
     user: 'caduser',
     password: 'R54WYazowIob6FNhICSzH2',
     database: 'cad'
