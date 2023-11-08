@@ -5,27 +5,13 @@ const app = express();
 const axios = require('axios');
 const Push = require('pushover-notifications');
 
-const RateLimit = require('axios-rate-limit');
-const rateLimitedAxios = RateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 180000 });
-
-
-
-const pushover = new Push({
-    user: 'uwaoo89yuqjsnri5wvcrqegg3muqg4', // Replace with your Pushover user key
-    token: 'auiyijcf3fharcg2zofjga588hecs5' // Replace with your Pushover API token
-});
-
-
-// Express : Define / Route
-app.get('/', (req, res) => {
-    res.send('Hello, world!');
-});
 
 // Express : Start Server
 const port = 3000; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
 
 
 const connection = mysql.createConnection({
@@ -252,3 +238,19 @@ function retrieveDispatchNarrative(dispcallidList) {
             });
     });
 }
+app.use(express.static('public'));
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+  });
+app.get('/databasestuff', (req, res) => {
+    const query = connection.query('SELECT * FROM calls', (error, results) => {
+        if (error) {
+            console.error('Error querying the database:', error);
+            return;
+        }
+        return res.send(JSON.stringify(results));
+    });
+});

@@ -1,0 +1,46 @@
+body {
+    font-family: Sans-serif;
+    background-color: #282a36;
+    color: white;
+  }
+  
+  ul {
+    list-style-type: none;
+  }
+  
+  #call-list {
+    width: 50%;
+    padding: 10px;
+    border: 2px solid #6272a4;
+    margin: 10px auto;
+    background-color: rgba(98, 114, 164, 0.2);
+  }
+  
+  #call-list div {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  #call-list div a {
+    font-weight: bold;
+    color: #fe8a71;
+    text-decoration: none;
+    padding: 10px;
+    font-size: 12px;
+    transition: all .2s;
+  }
+  
+  #call-list div a:hover {
+    background-color: #fe8a71;
+    color: white;
+  }
+  
+  #map {
+    height: 400px;
+    width: 50%;
+    border-radius: 5px;
+    margin-top: 10px;
+  }
