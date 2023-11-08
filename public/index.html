@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
     <link rel="stylesheet" type="text/css" href="./style.css">
     <title>Calls</title>
 </head>
-
 <body>
-    <h1>Calls</h1>
-    <ul id="call-list"></ul>
+    <div class="container">
+        <h1>Calls</h1>
+        <div id="call-list" class="call-list"></div>
+        <div id="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="main.js"></script>
-    <div id="map"></div>
-    <div id="map-container"></div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfyL9oJ1z2UHwR6bbeJzRHsECzGVLmXlI&callback=initMap" async defer></script>
-
 </body>
-
 </html>

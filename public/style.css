@@ -1,46 +1,71 @@
+/* General Styles */
 body {
-    font-family: Sans-serif;
-    background-color: #282a36;
-    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
   }
   
-  ul {
-    list-style-type: none;
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
   }
   
-  #call-list {
-    width: 50%;
-    padding: 10px;
-    border: 2px solid #6272a4;
-    margin: 10px auto;
-    background-color: rgba(98, 114, 164, 0.2);
+  h1 {
+    text-align: center;
+    color: #f44336;
   }
   
-  #call-list div {
-    padding: 10px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  h2 {
+    color: #f44336;
+  }
+  
+  p {
+    line-height: 1.5;
+  }
+  
+  /* Call List Styles */
+  .call-list {
+    margin-top: 20px;
+  }
+  
+  .call-item {
     margin-bottom: 10px;
-  }
-  
-  #call-list div a {
-    font-weight: bold;
-    color: #fe8a71;
-    text-decoration: none;
     padding: 10px;
-    font-size: 12px;
-    transition: all .2s;
-  }
-  
-  #call-list div a:hover {
-    background-color: #fe8a71;
-    color: white;
-  }
-  
-  #map {
-    height: 400px;
-    width: 50%;
+    background-color: #f7f7f7;
     border-radius: 5px;
-    margin-top: 10px;
   }
+  
+  .call-item h3 {
+    margin: 0;
+    color: #f44336;
+  }
+  
+  .call-item p {
+    margin: 0;
+    color: #666;
+  }
+  
+  /* Chart Styles */
+  .chart-container {
+    margin-top: 20px;
+  }
+  
+  /* Footer Styles */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #777;
+  }
+  
+  .navbar {
+    background-color: #f44336;
+    padding: 10px;
+    color: #fff;
+  }
+  
+  .navbar a {
+    color: #fff;
+  }
+  
+  
