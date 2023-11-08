@@ -27,6 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             recentCalls.forEach(call => {
                 const address = call.address;
+
                 if (addressCount.hasOwnProperty(address)) {
                     addressCount[address]++;
                 } else {
@@ -40,13 +41,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const chartData = {
                 labels: sortedAddressCount.map(([address]) => address),
-                datasets: [{
-                    label: 'Most Visited Addresses',
-                    data: sortedAddressCount.map(([address, count]) => count),
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Most Visited Addresses',
+                        data: sortedAddressCount.map(([address, count]) => count),
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }
+                ]
             };
 
             const chartOptions = {
@@ -54,9 +57,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        precision: 0, // Display whole numbers
-                    },
-                },
+                        precision: 0
+                    }
+                }
             };
 
             const chartCanvas = document.createElement('canvas');
@@ -69,4 +72,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 options: chartOptions
             });
         })
-})
+        .catch((error) => {
+            console.log('Error fetching data:', error);
+        });
+});
