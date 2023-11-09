@@ -1,86 +1,74 @@
+
 /* General Styles */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  h1 {
-    text-align: center;
-    color: #f44336;
-  }
-  
-  h2 {
-    color: #f44336;
-  }
-  
-  p {
-    line-height: 1.5;
-  }
-  
-  /* Call List Styles */
-  .call-list {
-    margin-top: 20px;
-  }
-  
-  .call-item {
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #f7f7f7;
-    border-radius: 5px;
-  }
-  
-  .call-item h3 {
-    margin: 0;
-    color: #f44336;
-  }
-  
-  .call-item p {
-    margin: 0;
-    color: #666;
-  }
-  
-  /* Chart Styles */
-  .chart-container {
-    margin-top: 20px;
-  }
-  
-  /* Footer Styles */
-  .footer {
-    text-align: center;
-    margin-top: 40px;
-    color: #777;
-  }
-  
-  .navbar {
-    background-color: #f44336;
-    padding: 10px;
-    color: #fff;
-  }
-  
-  .navbar a {
-    color: #fff;
-  }
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
 
-  .ems-icon {
-    background: url(https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Star_of_life2.svg/1200px-Star_of_life2.svg.png) no-repeat;
-    width: 40px;
-    height: 40px;
-    /* Additional styling if needed */
-  }
-  
-  .fire-icon {
-    background: url(https://images.emojiterra.com/google/android-12l/512px/1f525.png) no-repeat;
-    width: 40px;
-    height: 40px;
-    /* Additional styling if needed */
-  }
-  
-  
-  
+.container {
+  display: flex;
+  align-items: flex-start; /* Add this line */
+}
+
+h1 {
+  text-align: center;
+  color: #f44336;
+}
+
+h2 {
+  color: #f44336;
+}
+
+p {
+  line-height: 1.5;
+}
+
+/* Call List Styles */
+.call-list {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.call-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f7f7f7;
+  border-radius: 5px;
+  position: relative;
+}
+
+.call-item:after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+}
+
+
+.call-item:last-child:after {
+  display: none;
+}
+.charts-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Add this line */
+}
+.chart-container {
+  flex: 1;
+  max-height: 80vh;
+  width: 100%;
+  overflow-y: auto;
+}

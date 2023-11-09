@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://uptime.betterstack.com/widgets/announcement.js" data-id="173830" async="async" type="text/javascript"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css">
     <title>Calls</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDNo1XgNhreMtEQ4XOUG2chWlPWqtxywxc&libraries=places"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="main.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Calls</h1>
         <div id="call-list" class="call-list"></div>
-        <div id="chart-container">
-            <canvas id="chart"></canvas>
+        <div class="charts-container">
+            <div id="chart-container-calls" class="chart-container"></div>
+            <div id="chart-container-time" class="chart-container"></div>
+            <div id="chart-container-locations" class="chart-locations"></div>
+            <div id="map"></div>
+            <div id="chart-container-map"></div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="main.js"></script>
-    <iframe src="https://rdpfister.betteruptime.com" width="1000" height="300"></iframe>
 </body>
 </html>
