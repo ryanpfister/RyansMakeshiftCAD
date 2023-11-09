@@ -7,7 +7,7 @@ window.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then((data) => {
-            const recentCalls = data.slice(0, 20);
+            const recentCalls = data.slice(0, 50);
 
             recentCalls.forEach(call => {
                 const callItem = document.createElement('div');
