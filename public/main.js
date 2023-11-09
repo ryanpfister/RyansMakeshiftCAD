@@ -18,7 +18,11 @@ window.addEventListener('DOMContentLoaded', () => {
                     <h3>Call Type: ${call.dispcalltypedescr}</h3>
                     <h4>Call Description: ${call.dispsubtypedescr}</h4>
                     <p>Date: ${call.datetimealarm}</p>
+                    <h4>Location Name: ${call.sitename}</h4>
                     <p>Narrative: ${call.NARR}</p>
+                    <h4>Caller Name: ${call.CALLNAME}</h4>
+                    <p>Caller Phone: ${call.CALLPHONE}</p>
+                    <p>Caller Address: ${call.CALLADDR}</p>
                 `;
                 callList.appendChild(callItem);
             });
