@@ -13,10 +13,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 const callItem = document.createElement('div');
                 callItem.classList.add('call-item');
                 callItem.innerHTML = `
-                    <h3>${call.address}</h3>
-                    <h3>Incident Number: ${call.incnum}</h3>
                     <h3>Call Type: ${call.dispcalltypedescr}</h3>
-                    <h4>Call Description: ${call.dispsubtypedescr}</h4>
+                    <h4>${call.address}</h3>
+                    <h4>Incident Number: ${call.incnum}</h3>
+                    <h5>Call Description: ${call.dispsubtypedescr}</h4>
                     <p>Date: ${call.datetimealarm}</p>
                     <h4>Location Name: ${call.sitename}</h4>
                     <p>Narrative: ${call.NARR}</p>
