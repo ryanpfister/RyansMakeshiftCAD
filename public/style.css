@@ -67,5 +67,20 @@ body {
   .navbar a {
     color: #fff;
   }
+
+  .ems-icon {
+    background: url(https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Star_of_life2.svg/1200px-Star_of_life2.svg.png) no-repeat;
+    width: 40px;
+    height: 40px;
+    /* Additional styling if needed */
+  }
+  
+  .fire-icon {
+    background: url(https://images.emojiterra.com/google/android-12l/512px/1f525.png) no-repeat;
+    width: 40px;
+    height: 40px;
+    /* Additional styling if needed */
+  }
+  
   
   

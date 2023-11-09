@@ -13,6 +13,11 @@ window.addEventListener('DOMContentLoaded', () => {
             recentCalls.forEach(call => {
                 const callItem = document.createElement('div');
                 callItem.classList.add('call-item');
+
+                // Check the call type and set the appropriate icon
+                const icon = call.dispcalltypedescr === 'EMS' ? 'ems-icon' : 'fire-icon';
+
+
                 callItem.innerHTML = `
                     <h3>Call Type: ${call.dispcalltypedescr}</h3>
                     <h3>Call Description: ${call.dispsubtypedescr}</h4>
@@ -24,6 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     <h4>Caller Name: ${call.CALLNAME}</h4>
                     <p>Caller Phone: ${call.CALLPHONE}</p>
                     <p>Caller Address: ${call.CALLADDR}</p>
+                    <i class="${icon}"></i>
                 `;
                 callList.appendChild(callItem);
             });
