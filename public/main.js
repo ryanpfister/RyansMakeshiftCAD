@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
         })
         .then((data) => {
             const recentCalls = data.slice(0, 50);
+            recentCalls.reverse();
 
             recentCalls.forEach(call => {
                 const callItem = document.createElement('div');
