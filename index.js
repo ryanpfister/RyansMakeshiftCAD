@@ -6,7 +6,7 @@ const axios = require('axios');
 const Push = require('pushover-notifications');
 
 // Express : Start Server
-const port = 3000; // Use any port number you prefer
+const port = 80; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
