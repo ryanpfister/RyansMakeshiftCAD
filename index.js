@@ -262,7 +262,28 @@ app.get('/callstodate', (req, res) => {
     });
   });
   
-  app.get('/statistics', (req, res) => {
+  app.get('/firestatistics', (req, res) => {
+    // Fetch statistics from the database
+    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
+      if (error) {
+        console.error('Error fetching statistics:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return;
+      }
+  
+      const totalCalls = results[0].totalCalls;
+      const fireCalls = totalCalls - emsCalls;
+  
+      // Calculate the percentage of fire vs EMS calls
+      const percentageFireCalls = Math.round((fireCalls / totalCalls) * 100);
+  
+      // Return the statistics in JSON format
+      res.json({
+        percentageFireCalls
+          });
+    });
+  });
+  app.get('/emsstatistics', (req, res) => {
     // Fetch statistics from the database
     connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
       if (error) {
@@ -273,20 +294,16 @@ app.get('/callstodate', (req, res) => {
   
       const totalCalls = results[0].totalCalls;
       const emsCalls = results[0].emsCalls;
-      const fireCalls = totalCalls - emsCalls;
   
       // Calculate the percentage of fire vs EMS calls
-      const percentageFireCalls = Math.round((fireCalls / totalCalls) * 100);
       const percentageEMSCalls = Math.round((emsCalls / totalCalls) * 100);
   
       // Return the statistics in JSON format
       res.json({
-        percentageFireCalls,
         percentageEMSCalls
       });
     });
   });
-
 app.get('/databasestuff', (req, res) => {
     const query = connection.query('SELECT * FROM calls', (error, results) => {
         if (error) {
