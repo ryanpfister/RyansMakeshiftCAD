@@ -10,10 +10,10 @@ const port = 80; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
-//app.use((req, res, next) => {
-  //  res.set('Cache-Control', 'no-store')
-    //next()
-//})
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next()
+})
 
 
 const connection = mysql.createConnection({
