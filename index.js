@@ -262,6 +262,8 @@ app.get('/callstodate', (req, res) => {
     });
   });
   
+
+
   app.get('/firestatistics', (req, res) => {
     // Fetch statistics from the database
     connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
@@ -280,9 +282,11 @@ app.get('/callstodate', (req, res) => {
       // Return the statistics in JSON format
       res.json({
         percentageFireCalls
-          });
+      });
     });
   });
+
+
   app.get('/emsstatistics', (req, res) => {
     // Fetch statistics from the database
     connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
