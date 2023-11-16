@@ -4,14 +4,17 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 const Push = require('pushover-notifications');
-
+const nocache = require('nocache');
 
 // Express : Start Server
-const port = 80; // Use any port number you prefer
+const port = 3000; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
-
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next()
+  })
 
 
 const connection = mysql.createConnection({
@@ -81,7 +84,7 @@ function storeNewCalls(callData) {
                     retrieveUpdatedCallData(call);
                 }, 5 * 60 * 1000); // Delay in milliseconds (5 minutes)
             } else {
-                console.log('Call already found');        
+                console.log('Call already found'); 
             }
         });
     });
@@ -240,6 +243,53 @@ function retrieveDispatchNarrative(dispcallidList) {
 }
 app.use(express.static('public'));
 
+app.get('/callstodate', (req, res) => {
+    // Fetch the latest call ID from the database
+    connection.query('SELECT MAX(incnum) AS latestCallID FROM calls', (error, results, fields) => {
+      if (error) {
+        console.error('Error fetching latest call ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return;
+      }
+  
+      const fullLatestCallID = results[0].latestCallID;
+
+    // Extract the year and remove leading zeros
+    const year = fullLatestCallID.substring(0, 4);
+    const callNumber = fullLatestCallID.substring(4).replace(/^0+/, '');
+
+    // Return the modified result in JSON format
+    res.json({ callNumber });
+    });
+  });
+  
+  app.get('/statistics', (req, res) => {
+    // Fetch statistics from the database
+    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
+      if (error) {
+        console.error('Error fetching statistics:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return;
+      }
+  
+      const totalCalls = results[0].totalCalls;
+      const emsCalls = results[0].emsCalls;
+      const fireCalls = totalCalls - emsCalls;
+  
+      // Calculate the percentage of fire vs EMS calls
+      const percentageFireCalls = Math.round((fireCalls / totalCalls) * 100);
+      const percentageEMSCalls = Math.round((emsCalls / totalCalls) * 100);
+  
+      // Return the statistics in JSON format
+      res.json({
+        totalCalls,
+        emsCalls,
+        fireCalls,
+        percentageFireCalls,
+        percentageEMSCalls
+      });
+    });
+  });
 
 app.get('/databasestuff', (req, res) => {
     const query = connection.query('SELECT * FROM calls', (error, results) => {

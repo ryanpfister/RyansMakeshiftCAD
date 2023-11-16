@@ -14,7 +14,7 @@ function drawCharts() {
             return response.json();
         })
         .then((data) => {
-            const recentCalls = data.slice(0, 50);
+            const recentCalls = data.slice(0,10000);
             recentCalls.reverse();
 
             // Display Call List
@@ -26,6 +26,7 @@ function drawCharts() {
                     <p><b>Narrative:</b> ${call.NARR}</p>
 
                     <p>Date/Time: ${call.datetimealarm}</p>
+                    <p>Incident Number: ${call.incnum}</p>
                                     `;
                 callItem.classList.add('call-item');
                 callList.appendChild(callItem);
@@ -156,6 +157,7 @@ function drawCharts() {
           <h3>Location: ${call.address}, ${call.city}</h3>
           <p><b>Narrative:</b> ${call.NARR}</p>
           <p>Date/Time: ${call.datetimealarm}</p>
+          <p>Incident Number ${call.incnum}</p>
         `,
       });
 
