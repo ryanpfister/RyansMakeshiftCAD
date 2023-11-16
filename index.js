@@ -274,6 +274,7 @@ app.get('/callstodate', (req, res) => {
       }
   
       const totalCalls = results[0].totalCalls;
+      const emsCalls = results[0].emsCalls;
       const fireCalls = totalCalls - emsCalls;
   
       // Calculate the percentage of fire vs EMS calls
