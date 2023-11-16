@@ -281,9 +281,6 @@ app.get('/callstodate', (req, res) => {
   
       // Return the statistics in JSON format
       res.json({
-        totalCalls,
-        emsCalls,
-        fireCalls,
         percentageFireCalls,
         percentageEMSCalls
       });
