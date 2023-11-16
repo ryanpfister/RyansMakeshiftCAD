@@ -4,17 +4,16 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 const Push = require('pushover-notifications');
-const nocache = require('nocache');
 
 // Express : Start Server
 const port = 3000; // Use any port number you prefer
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
-app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store')
-    next()
-  })
+//app.use((req, res, next) => {
+  //  res.set('Cache-Control', 'no-store')
+    //next()
+//})
 
 
 const connection = mysql.createConnection({
