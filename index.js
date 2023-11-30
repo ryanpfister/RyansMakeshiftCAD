@@ -56,7 +56,7 @@ function retrieveCallData() {
 }
 // Run the code immediately upon startup
 
-const delayInMinutes = 0.5;
+const delayInMinutes = 120;
 const delayInMillis = delayInMinutes * 60 * 1000; // Convert minutes to milliseconds
 
 setInterval(retrieveCallData, delayInMillis);
