@@ -263,6 +263,7 @@ if (typeof fullLatestCallID === 'number') {
     
     // Ensure there is a substring to operate on
     if (fullLatestCallIDString.length >= 5) {
+        // Define callNumber here
         const callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
         // Rest of your code handling the values
     } else {
