@@ -253,6 +253,8 @@ app.get('/callstodate', (req, res) => {
   
 const fullLatestCallID = results[0] && results[0].latestCallID;
 
+let callNumber;  // Define callNumber here
+
 // Ensure fullLatestCallID is a string before using substring
 if (typeof fullLatestCallID === 'number') {
     // Convert number to string
@@ -263,8 +265,8 @@ if (typeof fullLatestCallID === 'number') {
     
     // Ensure there is a substring to operate on
     if (fullLatestCallIDString.length >= 5) {
-        // Define callNumber here
-        const callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
+        // Assign value to callNumber
+        callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
         // Rest of your code handling the values
     } else {
         console.error('Error: fullLatestCallID is too short to extract callNumber');
@@ -273,6 +275,9 @@ if (typeof fullLatestCallID === 'number') {
     console.error(`Error: fullLatestCallID is not a string, type: ${typeof fullLatestCallID}`);
     console.log('Full latestCallID:', fullLatestCallID);
 }
+
+// Now you can use callNumber here or in the subsequent code
+
 
 
     // Return the modified result in JSON format
