@@ -251,11 +251,16 @@ app.get('/callstodate', (req, res) => {
         return;
       }
   
-      const fullLatestCallID = results[0].latestCallID;
+     const fullLatestCallID = results[0].latestCallID;
 
-    // Extract the year and remove leading zeros
+// Ensure fullLatestCallID is a string before using substring
+if (typeof fullLatestCallID === 'string') {
     const year = fullLatestCallID.substring(0, 4);
     const callNumber = fullLatestCallID.substring(4).replace(/^0+/, '');
+    // Rest of your code handling the values
+} else {
+    console.error('Error: fullLatestCallID is not a string');
+}
 
     // Return the modified result in JSON format
     res.json({ callNumber });
