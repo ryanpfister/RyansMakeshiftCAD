@@ -254,13 +254,16 @@ app.get('/callstodate', (req, res) => {
 const fullLatestCallID = results[0] && results[0].latestCallID;
 
 // Ensure fullLatestCallID is a string before using substring
-if (typeof fullLatestCallID === 'string') {
+if (typeof fullLatestCallID === 'number') {
+    // Convert number to string
+    const fullLatestCallIDString = fullLatestCallID.toString();
+    
     // Extract the year and remove leading zeros
-    const year = fullLatestCallID.substring(0, 4);
+    const year = fullLatestCallIDString.substring(0, 4);
     
     // Ensure there is a substring to operate on
-    if (fullLatestCallID.length >= 5) {
-        const callNumber = fullLatestCallID.substring(4).replace(/^0+/, '');
+    if (fullLatestCallIDString.length >= 5) {
+        const callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
         // Rest of your code handling the values
     } else {
         console.error('Error: fullLatestCallID is too short to extract callNumber');
