@@ -18,8 +18,8 @@ app.use((req, res, next) => {
 
 const connection = mysql.createConnection({
     host: '35.203.85.92',
-    user: 'caduser',
-    password: 'R54WYazowIob6FNhICSzH2',
+    user: 'mifd',
+    password: 'mifd5150',
     database: 'cad'
 });
 
