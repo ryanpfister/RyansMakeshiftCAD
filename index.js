@@ -251,7 +251,7 @@ app.get('/callstodate', (req, res) => {
         return;
       }
   
-     const fullLatestCallID = results[0].latestCallID;
+const fullLatestCallID = results[0] && results[0].latestCallID;
 
 // Ensure fullLatestCallID is a string before using substring
 if (typeof fullLatestCallID === 'string') {
@@ -266,7 +266,8 @@ if (typeof fullLatestCallID === 'string') {
         console.error('Error: fullLatestCallID is too short to extract callNumber');
     }
 } else {
-    console.error('Error: fullLatestCallID is not a string');
+    console.error(`Error: fullLatestCallID is not a string, type: ${typeof fullLatestCallID}`);
+    console.log('Full latestCallID:', fullLatestCallID);
 }
 
 
