@@ -342,7 +342,7 @@ if (typeof fullLatestCallID === 'number') {
       const emsCalls = results[0].emsCalls;
   
       // Calculate the percentage of fire vs EMS calls
-      const percentageEMSCalls = Math.round((emsCalls+autoCrashCalls / totalCalls) * 100);
+      const percentageEMSCalls = Math.round((emsCalls / totalCalls) * 100);
   
       // Return the statistics in JSON format
       res.json({
