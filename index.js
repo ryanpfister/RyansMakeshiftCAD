@@ -254,7 +254,7 @@ function retrieveDispatchNarrative(dispcallidList) {
             });
     });
 }
-app.use('/sadfewrqu234215dsaflasdhfqkshdAS', authMiddleware, express.static('public'));
+app.use('/sadfewrqu234215dsaflasdhfqkshdAS', express.static('public'));
 
 app.get('/force-update-calls', authMiddleware, (req, res) => {
     retrieveCallData();
