@@ -339,7 +339,6 @@ if (typeof fullLatestCallID === 'number') {
       }
   
       const totalCalls = results[0].totalCalls;
-      const mvaCAlls = results[0].autoCrashCalls;
       const emsCalls = results[0].emsCalls;
   
       // Calculate the percentage of fire vs EMS calls
