@@ -61,12 +61,14 @@ p {
   display: none;
 }
 .charts-container {
+  overflow: hidden; /* Hide scrollbars */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* Add this line */
 }
 .chart-container {
+  overflow: hidden; /* Hide scrollbars */
   flex: 1;
   max-height: 80vh;
   width: 100%;

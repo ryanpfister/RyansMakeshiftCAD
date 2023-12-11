@@ -1,12 +1,17 @@
 google.charts.load('current', { packages: ['corechart'] });
 google.charts.setOnLoadCallback(drawCharts);
+let mutualAidsCount = 0;
 
 function drawCharts() {
     const callList = document.getElementById('call-list');
     const chartContainerCalls = document.getElementById('chart-container-calls');
     const chartContainerTime = document.getElementById('chart-container-time');
     const chartContainerLocations = document.getElementById('chart-container-locations');
-    const chartContainerMap = document.getElementById('chart-container-map');
+    const chartContainerDayOfWeek = document.getElementById('chart-container-dayofweek');
+    const chartContainerMonthlyTrends = document.getElementById('chart-container-monthlytrends');
+    const chartContainerCityDistribution = document.getElementById('chart-container-city');
+    const chartContainerMonth = document.getElementById('chart-container-month');
+    const chartContainerMutualAids = document.getElementById('chart-container-mutual-aids');
 
 
     fetch('/databasestuff')
@@ -14,7 +19,7 @@ function drawCharts() {
             return response.json();
         })
         .then((data) => {
-            const recentCalls = data.slice(0,10000);
+            const recentCalls = data.slice(0, 10000);
             recentCalls.reverse();
 
             // Display Call List
@@ -23,8 +28,7 @@ function drawCharts() {
                 callItem.innerHTML = `
                     <h2>${call.icon} | ${call.dispsubtypedescr}</h1>
                     <h3>Location: ${call.address}, ${call.city}</h3>
-                    <p><b>Narrative:</b> ${call.NARR}</p>
-
+                    <p>Narrative: ${call.NARR}</p>
                     <p>Date/Time: ${call.datetimealarm}</p>
                     <p>Incident Number: ${call.incnum}</p>
                                     `;
@@ -38,9 +42,9 @@ function drawCharts() {
                 if (type === 'FIRE') {
                     const fireCalls = recentCalls.filter(call => call.dispcalltypedescr === type || call.dispcalltypedescr !== 'EMS');
                     return fireCalls.length;
-                } else {
-                    const callsOfType = recentCalls.filter(call => call.dispcalltypedescr === type);
-                    return callsOfType.length;
+                } else if (type === 'EMS') {
+                    const emsCalls = recentCalls.filter(call => call.dispcalltypedescr === type || call.dispcalltypedescr !== 'FIRE');
+                    return emsCalls.length;
                 }
             });
 
@@ -65,6 +69,7 @@ function drawCharts() {
                     items: [
                         { text: 'FIRE', color: 'red' },
                         { text: 'EMS', color: 'blue' },
+                        { text: 'AUTOCRASH', color: 'green' },
                     ],
                 },
             };
@@ -127,44 +132,151 @@ function drawCharts() {
 
             const chartLocations = new google.visualization.BarChart(chartContainerLocations);
             chartLocations.draw(chartDataLocations, chartOptionsLocations);
+
+            //    // Chart 4: Days of the Week
+            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const callCountsByDayOfWeek = daysOfWeek.map(day => {
+                const count = recentCalls.filter(call => new Date(call.datetimealarm).getDay() === daysOfWeek.indexOf(day)).length;
+                return count;
+            });
+            const chartDataDayOfWeek = new google.visualization.DataTable();
+            chartDataDayOfWeek.addColumn('string', 'Day of Week');
+            chartDataDayOfWeek.addColumn('number', 'Call Count');
+            for (let i = 0; i < daysOfWeek.length; i++) {
+                chartDataDayOfWeek.addRow([daysOfWeek[i], callCountsByDayOfWeek[i]]);
+            }
+
+            const optionsDayOfWeek = {
+                title: 'Calls by Day of Week',
+                width: '100%',
+                height: '600px',
+            };
+            const chartDayOfWeek = new google.visualization.ColumnChart(chartContainerDayOfWeek);
+            chartDayOfWeek.draw(chartDataDayOfWeek, optionsDayOfWeek);
+
+            // Chart 5: Monthly Call Counts
+            const callCountsByMonth = Array.from({ length: 12 }, (_, i) => {
+                const count = recentCalls.filter(call => new Date(call.datetimealarm).getMonth() === i).length;
+                return count;
+            });
+
+            const chartDataMonth = new google.visualization.DataTable();
+            chartDataMonth.addColumn('string', 'Month');
+            chartDataMonth.addColumn('number', 'Call Count');
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            for (let i = 0; i < monthNames.length; i++) {
+                chartDataMonth.addRow([monthNames[i], callCountsByMonth[i]]);
+            }
+
+            const optionsMonth = {
+                title: 'Monthly Call Counts',
+                width: '100%',
+                height: 400,
+            };
+
+            const chartMonth = new google.visualization.ColumnChart(chartContainerMonth);
+            chartMonth.draw(chartDataMonth, optionsMonth);
+
+            // Chart 6: Monthly Call Trends
+            const callDates = recentCalls.map(call => new Date(call.datetimealarm));
+            const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+            const NewcallCountsByMonth = months.map(month => {
+                const count = callDates.filter(date => date.getMonth() + 1 === month).length;
+                return count;
+            });
+
+            const chartDataMonthlyTrends = new google.visualization.DataTable();
+            chartDataMonthlyTrends.addColumn('string', 'Month');
+            chartDataMonthlyTrends.addColumn('number', 'Call Count');
+            for (let i = 0; i < months.length; i++) {
+                chartDataMonthlyTrends.addRow([months[i].toString(), NewcallCountsByMonth[i]]);
+            }
+
+            const optionsMonthlyTrends = {
+                title: 'Monthly Call Trends',
+                width: '100%',
+                height: 400,
+            };
+
+            const chartMonthlyTrends = new google.visualization.ColumnChart(chartContainerMonthlyTrends);
+            chartMonthlyTrends.draw(chartDataMonthlyTrends, optionsMonthlyTrends);
+
+            // Chart 7: Call Distribution by City
+            const cities = recentCalls.reduce((acc, call) => {
+                const city = call.city;
+                if (acc[city]) {
+                    acc[city]++;
+                } else {
+                    acc[city] = 1;
+                }
+                return acc;
+            }, {});
+
+            const chartDataCityDistribution = new google.visualization.DataTable();
+            chartDataCityDistribution.addColumn('string', 'City');
+            chartDataCityDistribution.addColumn('number', 'Call Count');
+            for (const city in cities) {
+                chartDataCityDistribution.addRow([city, cities[city]]);
+            }
+
+            const optionsCityDistribution = {
+                title: 'Call Distribution by City',
+                width: '100%',
+                height: 400,
+            };
+
+            const chartCityDistribution = new google.visualization.PieChart(chartContainerCityDistribution);
+            chartCityDistribution.draw(chartDataCityDistribution, optionsCityDistribution);
+
+            // Mutaul Aids
+            const mutualAidsByDepartment = {
+                '5-06': 0, // Coram Fire Department
+                '5-09': 0, // Gordon Heights Fire Department
+                '5-22': 0, // Ridge Fire Department
+                '5-30': 0, // Yaphank Fire Department
+            };
+            // Count mutual aids by department
+            recentCalls.forEach(call => {
+                if (call.NARR && call.NARR.includes("N/R FOR THIS CALL")) {
+                    if (call.NARR.includes("5-22")) {
+                        mutualAidsByDepartment['5-22']++;
+                    } else if (call.NARR.includes("5-06")) {
+                        mutualAidsByDepartment['5-06']++;
+                    } else if (call.NARR.includes("5-09")) {
+                        mutualAidsByDepartment['5-09']++;
+                    } else if (call.NARR.includes("5-30")) {
+                        mutualAidsByDepartment['5-30']++;
+                    }
+                }
+            });
+            // Prepare data for the chart
+            const chartDataMutualAids = new google.visualization.DataTable();
+            chartDataMutualAids.addColumn('string', 'Fire Department');
+            chartDataMutualAids.addColumn('number', 'Mutual Aids Count');
+            // Add data to the chart
+            Object.entries(mutualAidsByDepartment).forEach(([department, count]) => {
+                chartDataMutualAids.addRow([department, count]);
+            });
+
+            // Chart options
+            const chartOptionsMutualAids = {
+                title: 'Mutual Aids MIFD Was Requested to Respond To',
+                width: '100%',
+                height: 400,
+                legend: 'none', // You can customize the legend if needed
+            };
+
+            // Create and draw the chart
+            const chartMutualAids = new google.visualization.ColumnChart(chartContainerMutualAids);
+            chartMutualAids.draw(chartDataMutualAids, chartOptionsMutualAids);
+
+            Object.entries(mutualAidsByDepartment).forEach(([department, count]) => {
+                chartDataMutualAids.addRow([department, count]);
+            });
+
+
         });
-
-    // Initialize Google Map for displaying call locations
-    const map = new google.maps.Map(chartContainerMap, {
-        center: { lat: 0, lng: 0 },
-        zoom: 12,
-    });
-
-    // Display markers for each call's location
-    recentCalls.forEach(call => {
-        const location = `${call.address}, ${call.city}`;
-
-        // Use geocoding to convert address to geographic coordinates (latitude and longitude)
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: location }, (results, status) => {
-            if (status === 'OK') {
-                const marker = new google.maps.Marker({
-                    map: map,
-                    position: results[0].geometry.location,
-                    title: call.dispsubtypedescr,
-                });
-
-                // Show call details when marker is clicked
-                // Show call details when marker is clicked
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <h2>${call.icon} | ${call.dispsubtypedescr}</h2>
-          <h3>Location: ${call.address}, ${call.city}</h3>
-          <p><b>Narrative:</b> ${call.NARR}</p>
-          <p>Date/Time: ${call.datetimealarm}</p>
-          <p>Incident Number ${call.incnum}</p>
-        `,
-      });
-
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-      });
-    }
-  });
-});
 }

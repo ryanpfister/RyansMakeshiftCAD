@@ -4,6 +4,16 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 const Push = require('pushover-notifications');
+const basicAuth = require('express-basic-auth');
+const username = 'mifd';
+const password = 'fireems';
+
+// Middleware to perform basic authentication
+const authMiddleware = basicAuth({
+    users: { [username]: password },
+    challenge: true, // Show authentication dialog if credentials are not provided
+    unauthorizedResponse: 'Unauthorized',
+});
 
 // Express : Start Server
 const port = 80; // Use any port number you prefer
@@ -14,6 +24,7 @@ app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store')
     next()
 })
+
 
 
 const connection = mysql.createConnection({
@@ -63,6 +74,7 @@ setInterval(retrieveCallData, delayInMillis);
 
 function storeNewCalls(callData) {
     console.log('Checking for New Calls');
+
     const dispcallidList = [];
 
     callData.forEach(call => {
@@ -79,23 +91,25 @@ function storeNewCalls(callData) {
                 console.log('Adding new call');
                 // Call does not exist in the database, insert it
                 insertCallData(call);
-                setTimeout(() => {
-                    retrieveUpdatedCallData(call);
-                }, 5 * 60 * 1000); // Delay in milliseconds (5 minutes)
             } else {
-                console.log('Call already found'); 
+                console.log('Updating existing call');
+                // Call already exists in the database, update it
+                updateCallData(call);
             }
+
+            // Add the dispcallid to the list for narrative retrieval
+            dispcallidList.push(dispcallid);
         });
     });
 
-    // Call the URL to retrieve dispatch narratives
+    // Call the URL to retrieve dispatch narratives after processing all calls
     setTimeout(() => {
         retrieveDispatchNarrative(dispcallidList);
-      }, 3 * 60 * 1000);
-      
+    }, 3 * 60 * 1000);
 }
 
-function retrieveUpdatedCallData(call) {
+
+function updateCallData(call) {
     const dispcallid = call.dispcallid;
 
     // Make a POST request to retrieve the updated call data
@@ -105,14 +119,13 @@ function retrieveUpdatedCallData(call) {
         nfirsmainid: call.nfirsmainid
     });
 
-    rateLimitedAxios.post(disppropUrl, disppropData)
+    axios.post(disppropUrl, disppropData)
         .then(response => {
             const updatedCallData = response.data.dispprop.data.dispcall;
             const updatedNarrative = updatedCallData.NARR;
             const updatedCallPhone = updatedCallData.CALLPHONE;
             const updatedCallAddr = updatedCallData.CALLADDR;
             const updatedCallName = updatedCallData.CALLNAME;
-
             // Update the stored call entry in the database with the updated data
             const updateQuery = connection.query('UPDATE calls SET NARR = ?, CALLPHONE = ?, CALLADDR = ?, CALLNAME = ? WHERE dispcallid = ?', [updatedNarrative, updatedCallPhone, updatedCallAddr, updatedCallName, dispcallid], (updateError, updateResults) => {
                 if (updateError) {
@@ -126,23 +139,24 @@ function retrieveUpdatedCallData(call) {
             console.error('Error retrieving updated call data:', error);
         });
 }
-
 function insertCallData(callData) {
     // Convert datetime value to the correct format
     const datetimeAlarm = new Date(callData.datetimealarm).toISOString().slice(0, 19).replace('T', ' ');
     callData.datetimealarm = datetimeAlarm;
-    const query = connection.query('INSERT INTO calls SET ?', callData, (error, results) => {
+
+    const query = connection.query('INSERT INTO calls SET ? ON DUPLICATE KEY UPDATE NARR = VALUES(NARR), CALLPHONE = VALUES(CALLPHONE), CALLADDR = VALUES(CALLADDR), CALLNAME = VALUES(CALLNAME)', callData, (error, results) => {
         if (error) {
-            console.error('Error inserting call data:', error);
+            console.error('Error inserting or updating call data:', error);
             return;
         }
-        console.log('Call data inserted successfully!');
+        console.log('Call data inserted or updated successfully!');
 
         setTimeout(() => {
             retrieveDispatchNarrative(callData);
         }, 180000);
     });
 }
+
 
 function fixMissingCallData(callData) {
     const dispcallid = callData.dispcallid;
@@ -240,8 +254,12 @@ function retrieveDispatchNarrative(dispcallidList) {
             });
     });
 }
-app.use(express.static('public'));
+app.use('/', authMiddleware, express.static('public'));
 
+app.get('/force-update-calls', authMiddleware, (req, res) => {
+    retrieveCallData();
+    res.json({ message: 'Force update initiated.' });
+});
 app.get('/callstodate', (req, res) => {
     // Fetch the latest call ID from the database
     connection.query('SELECT MAX(incnum) AS latestCallID FROM calls', (error, results, fields) => {
@@ -313,7 +331,7 @@ if (typeof fullLatestCallID === 'number') {
 
   app.get('/emsstatistics', (req, res) => {
     // Fetch statistics from the database
-    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
+    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "AUTOCRASH" THEN 1 ELSE 0 END) AS autoCrashCalls FROM calls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
       if (error) {
         console.error('Error fetching statistics:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -321,10 +339,11 @@ if (typeof fullLatestCallID === 'number') {
       }
   
       const totalCalls = results[0].totalCalls;
+      const mvaCAlls = results[0].autoCrashCalls;
       const emsCalls = results[0].emsCalls;
   
       // Calculate the percentage of fire vs EMS calls
-      const percentageEMSCalls = Math.round((emsCalls / totalCalls) * 100);
+      const percentageEMSCalls = Math.round((emsCalls+autoCrashCalls / totalCalls) * 100);
   
       // Return the statistics in JSON format
       res.json({
@@ -332,7 +351,7 @@ if (typeof fullLatestCallID === 'number') {
       });
     });
   });
-app.get('/databasestuff', (req, res) => {
+app.get('/databasestuff', authMiddleware, (req, res) => {
     const query = connection.query('SELECT * FROM calls', (error, results) => {
         if (error) {
             console.error('Error querying the database:', error);
