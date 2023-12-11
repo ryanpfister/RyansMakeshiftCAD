@@ -254,7 +254,7 @@ function retrieveDispatchNarrative(dispcallidList) {
             });
     });
 }
-app.use('/', authMiddleware, express.static('public'));
+app.use('/cad', authMiddleware, express.static('public'));
 
 app.get('/force-update-calls', authMiddleware, (req, res) => {
     retrieveCallData();
