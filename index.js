@@ -331,7 +331,7 @@ if (typeof fullLatestCallID === 'number') {
 
   app.get('/emsstatistics', (req, res) => {
     // Fetch statistics from the database
-    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "AUTOCRASH" THEN 1 ELSE 0 END) AS autoCrashCalls FROM calls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
+    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
       if (error) {
         console.error('Error fetching statistics:', error);
         res.status(500).json({ error: 'Internal Server Error' });
