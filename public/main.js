@@ -2,6 +2,8 @@ google.charts.load('current', { packages: ['corechart'] });
 google.charts.setOnLoadCallback(drawCharts);
 let mutualAidsCount = 0;
 
+
+
 function drawCharts() {
     const callList = document.getElementById('call-list');
     const chartContainerCalls = document.getElementById('chart-container-calls');
@@ -13,6 +15,14 @@ function drawCharts() {
     const chartContainerMonth = document.getElementById('chart-container-month');
     const chartContainerMutualAids = document.getElementById('chart-container-mutual-aids');
 
+    fetch('/year-in-review')
+    .then(response => response.json())
+    .then(data => {
+        // Update HTML elements with Year in Review data
+        document.getElementById('total-calls').innerHTML = `Total Calls in 2023: 2,873`;
+        document.getElementById('percentage-fire-calls').innerHTML = `Percentage of Fire Calls: ${data.percentageFireCalls}%`;
+    })
+    .catch(error => console.error('Error fetching year-in-review data:', error));
 
     fetch('/databasestuff')
         .then((response) => {
@@ -155,17 +165,43 @@ function drawCharts() {
             chartDayOfWeek.draw(chartDataDayOfWeek, optionsDayOfWeek);
 
             // Chart 5: Monthly Call Counts
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth(); // 0-indexed
+            // Define month names
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+
+            // Chart 5: Monthly Call Counts
             const callCountsByMonth = Array.from({ length: 12 }, (_, i) => {
-                const count = recentCalls.filter(call => new Date(call.datetimealarm).getMonth() === i).length;
-                return count;
+                const monthName = monthNames[i];
+                const callsForMonth = recentCalls.filter(call => {
+                    const callDate = new Date(call.datetimealarm);
+                    const callMonth = callDate.getMonth();
+                    const callYear = callDate.getFullYear();
+
+                    // Check if the month has come in the current year
+                    if (currentYear === callYear && i === callMonth) {
+                        return true;
+                    }
+
+                    // If the month hasn't come yet in the current year, consider the previous year
+                    if (currentYear - 1 === callYear && i === callMonth) {
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                console.log(`Month: ${monthName}, Calls: ${callsForMonth.length}`);
+                return callsForMonth.length;
             });
 
             const chartDataMonth = new google.visualization.DataTable();
             chartDataMonth.addColumn('string', 'Month');
             chartDataMonth.addColumn('number', 'Call Count');
-            const monthNames = [
-                'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
-            ];
+
+
             for (let i = 0; i < monthNames.length; i++) {
                 chartDataMonth.addRow([monthNames[i], callCountsByMonth[i]]);
             }
@@ -174,11 +210,13 @@ function drawCharts() {
                 title: 'Monthly Call Counts',
                 width: '100%',
                 height: 400,
+                vAxis: {
+                    minValue: 0
+                }
             };
 
             const chartMonth = new google.visualization.ColumnChart(chartContainerMonth);
             chartMonth.draw(chartDataMonth, optionsMonth);
-
             // Chart 6: Monthly Call Trends
             const callDates = recentCalls.map(call => new Date(call.datetimealarm));
             const months = Array.from({ length: 12 }, (_, i) => i + 1);

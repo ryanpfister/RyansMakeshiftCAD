@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 
 
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.111.154',
     user: 'mifd',
     password: 'mifd5150',
     database: 'cad'
@@ -306,50 +306,60 @@ if (typeof fullLatestCallID === 'number') {
 
 
   app.get('/firestatistics', (req, res) => {
-    // Fetch statistics from the database
-    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
-      if (error) {
-        console.error('Error fetching statistics:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-        return;
-      }
-  
-      const totalCalls = results[0].totalCalls;
-      const emsCalls = results[0].emsCalls;
-      const fireCalls = totalCalls - emsCalls;
-  
-      // Calculate the percentage of fire vs EMS calls
-      const percentageFireCalls = Math.round((fireCalls / totalCalls) * 100);
-  
-      // Return the statistics in JSON format
-      res.json({
-        percentageFireCalls
-      });
+    const currentYear = new Date().getFullYear();
+    console.log(currentYear)
+    // Fetch statistics for the current year from the database
+    connection.query('SELECT COUNT(*) AS totalCalls, ' +
+                    'SUM(CASE WHEN icon = "EMS" THEN 1 ELSE 0 END) AS emsCalls, ' +
+                    'SUM(CASE WHEN icon = "FIRE" OR icon = "CARFIRE" THEN 1 ELSE 0 END) AS fireCalls ' +
+                    'FROM calls WHERE YEAR(datetimealarm) = YEAR(CURDATE())', (error, results, fields) => {
+                        if (error) {
+            console.error('Error fetching statistics:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        const totalCalls = results[0].totalCalls || 0;
+        const emsCalls = results[0].emsCalls || 0;
+        const fireCalls = results[0].fireCalls || 0;
+
+        // Calculate the percentage of fire vs EMS calls
+        const percentageFireCalls = totalCalls > 0 ? Math.round((fireCalls / totalCalls) * 100) : 0;
+
+        // Return the statistics in JSON format
+        res.json({
+            totalCalls,
+            emsCalls,
+            fireCalls,
+            percentageFireCalls
+        });
     });
-  });
+});
 
 
-  app.get('/emsstatistics', (req, res) => {
-    // Fetch statistics from the database
-    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls', (error, results, fields) => {
-      if (error) {
-        console.error('Error fetching statistics:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-        return;
-      }
-  
-      const totalCalls = results[0].totalCalls;
-      const emsCalls = results[0].emsCalls;
-  
-      // Calculate the percentage of fire vs EMS calls
-      const percentageEMSCalls = Math.round((emsCalls / totalCalls) * 100);
-  
-      // Return the statistics in JSON format
-      res.json({
-        percentageEMSCalls
-      });
+app.get('/emsstatistics', (req, res) => {
+    const currentYear = new Date().getFullYear();
+
+    // Fetch statistics for the current year from the database
+    connection.query('SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN icon = "EMS" OR icon = "AUTOCRASH" THEN 1 ELSE 0 END) AS emsCalls FROM calls WHERE YEAR(datetimealarm) = YEAR(CURDATE())', (error, results, fields) => {
+        if (error) {
+            console.error('Error fetching statistics:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        const totalCalls = results[0].totalCalls || 0;
+        const emsCalls = results[0].emsCalls || 0;
+
+        // Calculate the percentage of fire vs EMS calls
+        const percentageEMSCalls = totalCalls > 0 ? Math.round((emsCalls / totalCalls) * 100) : 0;
+
+        // Return the statistics in JSON format
+        res.json({
+            totalCalls,
+            emsCalls,
+            percentageEMSCalls
+        });
     });
-  });
+});
 app.get('/databasestuff', authMiddleware, (req, res) => {
     const query = connection.query('SELECT * FROM calls', (error, results) => {
         if (error) {
@@ -359,6 +369,53 @@ app.get('/databasestuff', authMiddleware, (req, res) => {
         return res.send(JSON.stringify(results));
     });
 });
+
+app.get('/year-in-review', (req, res) => {
+    const previousYear = new Date().getFullYear() - 1;
+
+    // Fetch the highest incident number for the previous year
+    connection.query(
+        'SELECT MAX(incnum) AS highestIncidentNumber FROM calls WHERE YEAR(datetimealarm) = ?',
+        [previousYear],
+        (error, results) => {
+            if (error) {
+                console.error('Error fetching highest incident number:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+                return;
+            }
+
+            const highestIncidentNumber = results[0].highestIncidentNumber || 0; // Default to 0 if no data
+
+            // Fetch other statistics for the previous year
+            connection.query(
+                'SELECT COUNT(*) AS totalCalls, SUM(CASE WHEN dispcalltypedescr = "EMS" THEN 1 ELSE 0 END) AS emsCalls FROM calls WHERE YEAR(datetimealarm) = ?',
+                [previousYear],
+                (statsError, statsResults) => {
+                    if (statsError) {
+                        console.error('Error fetching year-in-review statistics:', statsError);
+                        res.status(500).json({ error: 'Internal Server Error' });
+                        return;
+                    }
+
+                    const totalCalls = statsResults[0].totalCalls;
+                    const emsCalls = statsResults[0].emsCalls;
+                    const fireCalls = totalCalls - emsCalls;
+                    const percentageFireCalls = Math.round((fireCalls / totalCalls) * 100);
+
+                    // Return the statistics in JSON format
+                    res.json({
+                        highestIncidentNumber,
+                        totalCalls,
+                        emsCalls,
+                        fireCalls,
+                        percentageFireCalls
+                    });
+                }
+            );
+        }
+    );
+});
+
 app.use(function (req, res, next) {
 
     // Website you wish to allow to connect
