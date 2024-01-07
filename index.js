@@ -569,19 +569,24 @@ app.get('/rss-data', (req, res) => {
 });
 
 app.get('/rss-sign', (req, res) => {
-    const xml = `
-            <rss version="2.0">
-                <channel>
-                    <item>
-                        <title></title>
-                        <description>${rssData.value}</description>
-                    </item>
-                </channel>
-            </rss>
-        `;
+    const feed = new RSS({
+        title: 'Feed',
+        feed_url: 'https://cad.rdpconsulting.org.org/rss-sign', // Update with your actual feed URL
+        site_url: 'https://cad.rdpconsulting.org.org/', // Update with your actual site URL
+    });
 
-        // Send the feed as XML
-        res.type('xml').send(xml);
+    feed.item({
+        title: 'Sign Value',
+        description: rssData.value.toString(),
+        date: new Date(), // Add the current date here
+    });
+
+    const xml = feed.xml();
+
+    // Remove extra line breaks and indentation
+    const cleanXml = xml.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1');
+
+    res.type('xml').send(cleanXml);
 });
 
 // Call Statistics Feed
@@ -644,19 +649,22 @@ app.get('/callrss', async (req, res) => {
         // Fetch your call statistics data from the database
         const statistics = await fetchCallStatistics();
 
-        // Generate a simple RSS feed with the required information
-        const xml = `
-            <rss version="2.0">
-                <channel>
-                    <item>
-                        <title></title>
-                        <description>Total Calls: ${statistics.totalCalls}, EMS Calls: ${statistics.emsCalls}, Fire Calls: ${statistics.fireCalls}</description>
-                    </item>
-                </channel>
-            </rss>
-        `;
-
         // Send the feed as XML
+
+        const feed = new RSS({
+            title: 'Feed',
+            feed_url: 'https://cad.rdpconsulting.org.org/rss-feed',
+            site_url: 'https://cad.rdpconsulting.org.org/',
+        });
+    
+        feed.item({
+            title: 'Calls',
+            description: `Total Calls: ${statistics.totalCalls}, EMS Calls: ${statistics.emsCalls}, Fire Calls: ${statistics.fireCalls}`,
+            date: new Date(), // Add the current date here
+        });
+    
+        const xml = feed.xml();
+    
         res.type('xml').send(xml);
     } catch (error) {
         console.error('Error:', error);
