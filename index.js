@@ -4,16 +4,22 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 const Push = require('pushover-notifications');
-const basicAuth = require('express-basic-auth');
-const username = 'mifd';
-const password = 'fireems';
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+const RSS = require('rss');  // Import the rss module
 
-// Middleware to perform basic authentication
-const authMiddleware = basicAuth({
-    users: { [username]: password },
-    challenge: true, // Show authentication dialog if credentials are not provided
-    unauthorizedResponse: 'Unauthorized',
-});
+
+
+const imapConfig = {
+    user: 'mifdcalltracker@gmail.com',
+    password: 'edli vgeo uddl clzd',
+    host: 'imap.gmail.com',
+    port: 993,
+    tls: true,
+    tlsOptions: {
+        rejectUnauthorized: false
+    },
+};
 
 // Express : Start Server
 const port = 80; // Use any port number you prefer
@@ -194,7 +200,7 @@ function fixMissingCallData(callData) {
 }
 
 function retrieveDispatchNarrative(dispcallidList) {
-    
+
     const processedIds = new Set();
 
     const query = connection.query('SELECT dispcallid, nfirsmainid, NARR, CALLPHONE, CALLADDR, CALLNAME FROM calls', (error, results) => {
@@ -217,10 +223,10 @@ function retrieveDispatchNarrative(dispcallidList) {
             }
             processedIds.add(dispcallid);
 
-           
-                // Add the dispcallid and nfirsmainid to the batch request array
-                batchRequest.push({ dispcallid, nfirsmainid });
-            
+
+            // Add the dispcallid and nfirsmainid to the batch request array
+            batchRequest.push({ dispcallid, nfirsmainid });
+
         });
 
         // Make a single POST request to retrieve dispatch narratives for multiple calls
@@ -256,83 +262,83 @@ function retrieveDispatchNarrative(dispcallidList) {
 }
 app.use('/afjasdpfapewf', express.static('public'));
 
-app.get('/force-update-calls', authMiddleware, (req, res) => {
+app.get('/force-update-calls', (req, res) => {
     retrieveCallData();
     res.json({ message: 'Force update initiated.' });
 });
 app.get('/callstodate', (req, res) => {
     // Fetch the latest call ID from the database
     connection.query('SELECT MAX(incnum) AS latestCallID FROM calls', (error, results, fields) => {
-      if (error) {
-        console.error('Error fetching latest call ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-        return;
-      }
-  
-const fullLatestCallID = results[0] && results[0].latestCallID;
+        if (error) {
+            console.error('Error fetching latest call ID:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+            return;
+        }
 
-let callNumber;  // Define callNumber here
+        const fullLatestCallID = results[0] && results[0].latestCallID;
 
-// Ensure fullLatestCallID is a string before using substring
-if (typeof fullLatestCallID === 'number') {
-    // Convert number to string
-    const fullLatestCallIDString = fullLatestCallID.toString();
-    
-    // Extract the year and remove leading zeros
-    const year = fullLatestCallIDString.substring(0, 4);
-    
-    // Ensure there is a substring to operate on
-    if (fullLatestCallIDString.length >= 5) {
-        // Assign value to callNumber
-        callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
-        // Rest of your code handling the values
-    } else {
-        console.error('Error: fullLatestCallID is too short to extract callNumber');
-    }
-} else {
-    console.error(`Error: fullLatestCallID is not a string, type: ${typeof fullLatestCallID}`);
-    console.log('Full latestCallID:', fullLatestCallID);
-}
+        let callNumber;  // Define callNumber here
 
-// Now you can use callNumber here or in the subsequent code
+        // Ensure fullLatestCallID is a string before using substring
+        if (typeof fullLatestCallID === 'number') {
+            // Convert number to string
+            const fullLatestCallIDString = fullLatestCallID.toString();
+
+            // Extract the year and remove leading zeros
+            const year = fullLatestCallIDString.substring(0, 4);
+
+            // Ensure there is a substring to operate on
+            if (fullLatestCallIDString.length >= 5) {
+                // Assign value to callNumber
+                callNumber = fullLatestCallIDString.substring(4).replace(/^0+/, '');
+                // Rest of your code handling the values
+            } else {
+                console.error('Error: fullLatestCallID is too short to extract callNumber');
+            }
+        } else {
+            console.error(`Error: fullLatestCallID is not a string, type: ${typeof fullLatestCallID}`);
+            console.log('Full latestCallID:', fullLatestCallID);
+        }
+
+        // Now you can use callNumber here or in the subsequent code
 
 
 
-    // Return the modified result in JSON format
-    res.json({ callNumber });
+        // Return the modified result in JSON format
+        res.json({ callNumber });
     });
-  });
-  
+});
 
 
-  app.get('/firestatistics', (req, res) => {
+
+app.get('/firestatistics', (req, res) => {
     const currentYear = new Date().getFullYear();
     console.log(currentYear)
     // Fetch statistics for the current year from the database
     connection.query('SELECT COUNT(*) AS totalCalls, ' +
-                    'SUM(CASE WHEN icon = "EMS" THEN 1 ELSE 0 END) AS emsCalls, ' +
-                    'SUM(CASE WHEN icon = "FIRE" OR icon = "CARFIRE" THEN 1 ELSE 0 END) AS fireCalls ' +
-                    'FROM calls WHERE YEAR(datetimealarm) = YEAR(CURDATE())', (error, results, fields) => {
-                        if (error) {
-            console.error('Error fetching statistics:', error);
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
+        'SUM(CASE WHEN icon = "EMS" THEN 1 ELSE 0 END) AS emsCalls, ' +
+        'SUM(CASE WHEN icon = "FIRE" OR icon = "CARFIRE" THEN 1 ELSE 0 END) AS fireCalls ' +
+        'FROM calls WHERE YEAR(datetimealarm) = YEAR(CURDATE())', (error, results, fields) => {
+            if (error) {
+                console.error('Error fetching statistics:', error);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
 
-        const totalCalls = results[0].totalCalls || 0;
-        const emsCalls = results[0].emsCalls || 0;
-        const fireCalls = results[0].fireCalls || 0;
+            const totalCalls = results[0].totalCalls || 0;
+            const emsCalls = results[0].emsCalls || 0;
+            const fireCalls = results[0].fireCalls || 0;
 
-        // Calculate the percentage of fire vs EMS calls
-        const percentageFireCalls = totalCalls > 0 ? Math.round((fireCalls / totalCalls) * 100) : 0;
+            // Calculate the percentage of fire vs EMS calls
+            const percentageFireCalls = totalCalls > 0 ? Math.round((fireCalls / totalCalls) * 100) : 0;
 
-        // Return the statistics in JSON format
-        res.json({
-            totalCalls,
-            emsCalls,
-            fireCalls,
-            percentageFireCalls
+            // Return the statistics in JSON format
+            res.json({
+                totalCalls,
+                emsCalls,
+                fireCalls,
+                percentageFireCalls
+            });
         });
-    });
 });
 
 
@@ -360,7 +366,7 @@ app.get('/emsstatistics', (req, res) => {
         });
     });
 });
-app.get('/databasestuff', authMiddleware, (req, res) => {
+app.get('/databasestuff', (req, res) => {
     const query = connection.query('SELECT * FROM calls', (error, results) => {
         if (error) {
             console.error('Error querying the database:', error);
@@ -415,6 +421,9 @@ app.get('/year-in-review', (req, res) => {
         }
     );
 });
+app.get('/rssfeed', function (req, res, next) {
+
+});
 
 app.use(function (req, res, next) {
 
@@ -437,3 +446,232 @@ app.use(function (req, res, next) {
     // Pass to next layer of middleware
     next();
 });
+
+const specificEmail = ['mifdradio@middleislandfd.org', 'mifd413@gmail.com']; // Replace with the desired email address
+
+const getEmails = () => {
+    try {
+        const imap = new Imap(imapConfig);
+
+        imap.once('ready', () => {
+            imap.openBox('INBOX', false, () => {
+                imap.search(['UNSEEN', ['SINCE', new Date()]], (err, results) => {
+                    if (err) {
+                        console.error('Error searching for unseen messages:', err);
+                        return;
+                    }
+
+                    if (results.length === 0) {
+                        console.log('No new messages to fetch.');
+                        imap.end();
+                        return;
+                    }
+
+                    const f = imap.fetch(results, { bodies: '' });
+
+                    f.on('message', msg => {
+                        msg.on('body', stream => {
+                            simpleParser(stream, async (err, parsed) => {
+                                console.log(parsed);
+
+                                // Check if the email is from a specific address
+                                const senderEmail = parsed.from.text.toLowerCase();
+                                if (specificEmail.some(specificEmail => senderEmail.includes(specificEmail.toLowerCase()))) {
+                                    // Update the RSS data to 1 when a new email is received from the specific address
+                                    rssData.value = 1;
+                                    // Reset the countdown for the RSS data
+                                    resetCountdown();
+                                }
+
+                                // Your logic to save the data into a database or make API calls
+                            });
+                        });
+
+                        msg.once('attributes', attrs => {
+                            const { uid } = attrs;
+                            imap.addFlags(uid, ['\\Seen'], () => {
+                                console.log('Marked as read!');
+                            });
+                        });
+                    });
+
+                    f.once('error', ex => {
+                        console.error('Error fetching messages:', ex);
+                        imap.end();
+                    });
+
+                    f.once('end', () => {
+                        console.log('Done fetching all messages!');
+                        imap.end();
+                    });
+                });
+            });
+        });
+
+        imap.once('error', err => {
+            console.error('IMAP connection error:', err);
+        });
+
+        imap.once('end', () => {
+            console.log('Connection ended');
+        });
+
+        imap.connect();
+    } catch (ex) {
+        console.error('An error occurred:', ex);
+    }
+};
+
+
+// Run the getEmails function immediately and then every 10 seconds
+getEmails(); // Run immediately
+setInterval(getEmails, 10000); // Run every 10 seconds (10000 milliseconds)
+
+
+// RSS
+let rssData = {
+    value: 0,
+    countdown: null,
+};
+
+const startCountdown = () => {
+    rssData.countdown = setTimeout(() => {
+        rssData.value = 0;
+        console.log('Countdown finished. Resetting value to 0.');
+    }, 20 * 60 * 1000); // 20 minutes in milliseconds
+};
+
+const resetCountdown = () => {
+    clearTimeout(rssData.countdown);
+    startCountdown();
+};
+
+// Your route for handling incoming emails
+app.post('/incoming-email', (req, res) => {
+    // Assuming the email data is in the request body
+    const emailData = req.body;
+
+    // Your logic to process the email data
+    console.log('Received email:', emailData);
+
+    // Set the RSS data to 1
+    rssData.value = 1;
+
+    // Reset the countdown
+    resetCountdown();
+
+    res.status(200).json({ message: 'Email processed successfully.' });
+});
+
+// Route to get the current RSS data
+app.get('/rss-data', (req, res) => {
+    res.status(200).json({ value: rssData.value });
+});
+
+app.get('/rss-feed', (req, res) => {
+    const xml = `
+            <rss version="2.0">
+                <channel>
+                    <item>
+                        <title></title>
+                        <description>${rssData.value}</description>
+                    </item>
+                </channel>
+            </rss>
+        `;
+
+        // Send the feed as XML
+        res.type('xml').send(xml);
+});
+
+// Call Statistics Feed
+const feed = new RSS({
+    title: 'Call Statistics RSS Feed',
+    description: 'Updates on call statistics.',
+    feed_url: 'http://cad.rdpconsulting.org/callrss', // Replace with your actual domain
+    site_url: 'http://middleislandfd.com', // Replace with your actual domain
+  });
+
+
+// Function to fetch call statistics from the database for the current year
+function fetchCallStatistics() {
+    return new Promise((resolve, reject) => {
+        // Get the current year
+        const currentYear = new Date().getFullYear();
+
+        // Query to fetch statistics for the current year from the database
+        const query = `
+        SELECT
+            COUNT(*) AS totalCalls,
+            SUM(CASE WHEN icon = "EMS" THEN 1 ELSE 0 END) AS emsCalls,
+            SUM(CASE WHEN icon = "FIRE" OR icon = "CARFIRE" THEN 1 ELSE 0 END) AS fireCalls
+        FROM calls
+        WHERE YEAR(datetimealarm) = ?
+        `;
+
+        // Execute the query
+        connection.query(query, [currentYear], (error, results, fields) => {
+            if (error) {
+                console.error('Error fetching statistics:', error);
+                reject({ error: 'Internal Server Error' });
+                return;
+            }
+
+            // Extract statistics from the results
+            const totalCalls = results[0].totalCalls || 0;
+            const emsCalls = results[0].emsCalls || 0;
+            const fireCalls = results[0].fireCalls || 0;
+
+            // Calculate the percentage of fire vs EMS calls
+            const percentageFireCalls = totalCalls > 0 ? Math.round((fireCalls / totalCalls) * 100) : 0;
+
+            // Return the statistics in JSON format
+            const statistics = {
+                totalCalls,
+                emsCalls,
+                fireCalls,
+                percentageFireCalls,
+            };
+
+            resolve(statistics);
+        });
+    });
+}
+
+
+app.get('/callrss', async (req, res) => {
+    try {
+        // Fetch your call statistics data from the database
+        const statistics = await fetchCallStatistics();
+
+        // Generate a simple RSS feed with the required information
+        const xml = `
+            <rss version="2.0">
+                <channel>
+                    <item>
+                        <title></title>
+                        <description>Total Calls: ${statistics.totalCalls}, EMS Calls: ${statistics.emsCalls}, Fire Calls: ${statistics.fireCalls}</description>
+                    </item>
+                </channel>
+            </rss>
+        `;
+
+        // Send the feed as XML
+        res.type('xml').send(xml);
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle the error
+        res.status(500).send('Internal Server Error');
+    }
+});
+  
+  // Example usage of the fetchCallStatistics function
+  app.get('/fetch-call-statistics', (req, res) => {
+    fetchCallStatistics((error, statistics) => {
+      if (error) {
+        return res.status(500).json({ error });
+      }
+      res.json(statistics);
+    });
+  });
+  
