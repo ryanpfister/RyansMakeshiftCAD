@@ -568,7 +568,7 @@ app.get('/rss-data', (req, res) => {
     res.status(200).json({ value: rssData.value });
 });
 
-app.get('/rss-feed', (req, res) => {
+app.get('/rss-sign', (req, res) => {
     const xml = `
             <rss version="2.0">
                 <channel>
